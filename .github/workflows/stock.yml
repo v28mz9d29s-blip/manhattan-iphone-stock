@@ -22,17 +22,15 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 3
-    env:
-      NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
       - name: Restore last observation
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .monitor-state
           key: iphone-stock-v1-${{ github.run_id }}-${{ github.run_attempt }}
@@ -41,6 +39,7 @@ jobs:
         id: monitor
         continue-on-error: true
         env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           TEST_ALERT: ${{ inputs.test_alert }}
           PROBE_ONLY: ${{ inputs.probe_only }}
         run: |
@@ -53,7 +52,7 @@ jobs:
           fi
       - name: Save state even after inventory failure
         if: ${{ always() && inputs.test_alert != true && inputs.probe_only != true && hashFiles('.monitor-state/state.json') != '' }}
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .monitor-state
           key: iphone-stock-v1-${{ github.run_id }}-${{ github.run_attempt }}

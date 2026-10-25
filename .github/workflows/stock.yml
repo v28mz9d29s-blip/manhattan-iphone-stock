@@ -1,0 +1,62 @@
+name: Manhattan iPhone stock
+on:
+  schedule:
+    # Five minutes is GitHub's minimum. Offset from :00 to reduce peak-hour contention.
+    - cron: '2-59/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      test_alert:
+        description: Send a phone test notification
+        type: boolean
+        default: false
+      probe_only:
+        description: Check live inventory without alerts
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: iphone-stock-watch
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Restore last observation
+        uses: actions/cache/restore@v4
+        with:
+          path: .monitor-state
+          key: iphone-stock-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: iphone-stock-v1-
+      - name: Run checker
+        id: monitor
+        continue-on-error: true
+        env:
+          TEST_ALERT: ${{ inputs.test_alert }}
+          PROBE_ONLY: ${{ inputs.probe_only }}
+        run: |
+          if [ "$TEST_ALERT" = "true" ]; then
+            python monitor.py --test-alert
+          elif [ "$PROBE_ONLY" = "true" ]; then
+            python monitor.py --probe
+          else
+            python monitor.py
+          fi
+      - name: Save state even after inventory failure
+        if: ${{ always() && inputs.test_alert != true && inputs.probe_only != true && hashFiles('.monitor-state/state.json') != '' }}
+        uses: actions/cache/save@v4
+        with:
+          path: .monitor-state
+          key: iphone-stock-v1-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Mark failed checks visibly
+        if: steps.monitor.outcome == 'failure'
+        run: exit 1

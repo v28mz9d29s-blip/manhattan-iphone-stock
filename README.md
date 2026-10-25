@@ -3,9 +3,11 @@
 Python standard library only. No pip dependencies, AI calls, model tokens, or OpenAI API key.
 Checks iPhone Duo **256GB Star White, unlocked** at all seven Manhattan Apple Stores.
 
-## Status: prepared and tested locally, not deployed
+## Status: deployed; phone subscription pending
 
-The working Apple endpoint was verified from the development environment on October 24, 2026: all seven Manhattan stores returned the exact product and were unavailable. This does not establish GitHub-runner access. After uploading, run the workflow with `probe_only` checked and verify its result. Run it separately with `test_alert` checked and confirm delivery on your phone before relying on the monitor.
+The public GitHub repository and five-minute workflow are configured. A complete manual GitHub Actions run succeeded on October 24, 2026 at 8:25 PM America/New_York. Apple returned the exact product at all seven Manhattan stores; all were unavailable. State was saved successfully to the Actions cache. The NTFY_TOPIC repository secret is configured. Subscribe to the private topic in the ntfy phone app and verify a test notification before relying on phone alerts. The topic is intentionally absent from this public README.
+
+Workflow: https://github.com/v28mz9d29s-blip/manhattan-iphone-stock/actions/workflows/stock.yml
 
 ## Schedule and limits
 

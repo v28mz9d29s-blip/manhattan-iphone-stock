@@ -10,7 +10,7 @@ On your phone:
 1. Install GitHub Mobile and sign into the repository owner's account.
 2. Allow iOS notifications for GitHub.
 3. GitHub Mobile → Profile → Settings → Notifications → enable **Direct mentions**. Check Working Hours so they do not silence wanted alerts.
-4. Run the workflow with **Send a phone test notification** checked. Confirm that the labelled test issue reaches your phone.
+4. Phone delivery was verified during setup. There is no test-alert mode: only confirmed pickup stock generates mentions.
 
 Email alerts can also be enabled in GitHub's participating-notification settings. App installation alone does not configure every notification preference.
 
@@ -22,7 +22,7 @@ Scheduled at minutes 2, 7, 12, ..., 57 each hour. GitHub's minimum interval is f
 
 GitHub may delay or drop runs; brief restocks can be missed. Public schedules disable after 60 days without repository activity. Review the Actions page periodically. The tiny state cache suppresses repeat alerts, but cache eviction can cause duplicates. Leave default cache storage limits in place.
 
-HTTP errors, missing stores, mismatched products and unknown statuses are failures, never evidence of no stock. Failures back off and produce a mention at most once per six hours while state is retained. No reservations or purchases are made. The separate hourly AI watch is paused.
+HTTP errors, missing stores, mismatched products and unknown statuses are failures, never evidence of no stock. Failures back off silently and are recorded in run logs/state. Out-of-stock results, errors, and recovery never create alert issues. No reservations or purchases are made. The separate hourly AI watch is paused.
 
 ## Permissions and verification
 
@@ -34,7 +34,7 @@ Pause: Actions → Manhattan iPhone stock → three-dot menu → Disable workflo
 
 Local tests: python -m unittest -v test_monitor.py
 Live stock without alerts: python monitor.py --probe
-Mention test: python monitor.py --test-alert (requires workflow token, repository, and NOTIFY_LOGIN)
+Stock-only alerts require the workflow token, repository, and NOTIFY_LOGIN.
 
 ## Sources
 

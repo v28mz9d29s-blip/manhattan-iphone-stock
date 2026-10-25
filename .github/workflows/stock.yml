@@ -5,10 +5,6 @@ on:
     - cron: '2-59/5 * * * *'
   workflow_dispatch:
     inputs:
-      test_alert:
-        description: Send a phone test notification
-        type: boolean
-        default: false
       probe_only:
         description: Check live inventory without alerts
         type: boolean
@@ -42,18 +38,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           NOTIFY_LOGIN: v28mz9d29s-blip
-          TEST_ALERT: ${{ inputs.test_alert }}
           PROBE_ONLY: ${{ inputs.probe_only }}
         run: |
-          if [ "$TEST_ALERT" = "true" ]; then
-            python monitor.py --test-alert
-          elif [ "$PROBE_ONLY" = "true" ]; then
+          if [ "$PROBE_ONLY" = "true" ]; then
             python monitor.py --probe
           else
             python monitor.py
           fi
       - name: Save state even after inventory failure
-        if: ${{ always() && inputs.test_alert != true && inputs.probe_only != true && hashFiles('.monitor-state/state.json') != '' }}
+        if: ${{ always() && inputs.probe_only != true && hashFiles('.monitor-state/state.json') != '' }}
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .monitor-state

@@ -107,23 +107,16 @@ def run(path, now=None):
         # Do not log URLs from a notification provider or secret values.
         description = f'Apple inventory HTTP {error.code}' if isinstance(error, urllib.error.HTTPError) else type(error).__name__
         state.update(failures=failures, next_attempt=now + delay, last_error=description)
-        if now - state.get('last_error_alert', 0) >= 21600:
-            try:
-                notify('iPhone monitor needs attention', description + '. Stock is UNKNOWN, not out of stock. Checks will retry with backoff.')
-                state['last_error_alert'] = now
-            except Exception:
-                print('Failure notification could not be delivered.', file=sys.stderr)
+        # Inventory errors are logged and retried silently; never send non-stock alerts.
         save(path, state)
         print(description + '; stock is unknown.', file=sys.stderr)
-        return 1
+        return 0
     fresh = newly_available(state.get('stores', {}), current)
     if fresh:
         timestamp = datetime.fromtimestamp(now, ZoneInfo('America/New_York')).isoformat()
         notify('iPhone Duo available in Manhattan', PRODUCT + ' (unlocked)\n' +
                '\n'.join(s['name'] + ': ' + s['quote'] for s in fresh) + '\nChecked ' + timestamp + '\n' + BUY)
     # Delivery must succeed before consuming the transition; otherwise retry next run.
-    if state.get('failures'):
-        notify('iPhone monitoring restored', 'Apple pickup inventory checks are working again.')
     save(path, dict(stores=current, last_success=now, failures=0))
     print(json.dumps({'checked_at': datetime.fromtimestamp(now, ZoneInfo('America/New_York')).isoformat(),
                       'stores': current, 'new_alerts': len(fresh)}, indent=2))
@@ -133,12 +126,9 @@ def run(path, now=None):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--probe', action='store_true', help='Read live inventory once without sending alerts or changing state')
-    parser.add_argument('--test-alert', action='store_true', help='Create a clearly labelled GitHub mention test')
     args = parser.parse_args()
     if args.probe:
         print(json.dumps(inventory(), indent=2))
-    elif args.test_alert:
-        notify('iPhone stock watch test', 'Test notification only; this does not mean any iPhone is available.')
     else:
         if not os.environ.get('GITHUB_TOKEN') or not os.environ.get('NOTIFY_LOGIN'):
             sys.exit('Configure the workflow GitHub token and notification recipient.')

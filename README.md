@@ -1,50 +1,44 @@
-# Free GitHub iPhone stock watch
+# Manhattan iPhone stock watch
 
-Python standard library only. No pip dependencies, AI calls, model tokens, or OpenAI API key.
-Checks iPhone Duo **256GB Star White, unlocked** at all seven Manhattan Apple Stores.
+Checks **iPhone Duo 256GB Star White, unlocked** at all seven Manhattan Apple Stores. Python standard library only; no AI calls or recurring model tokens.
 
-## Status: deployed; phone subscription pending
+## GitHub Mobile alerts
 
-The public GitHub repository and five-minute workflow are configured. A complete manual GitHub Actions run succeeded on October 24, 2026 at 8:25 PM America/New_York. Apple returned the exact product at all seven Manhattan stores; all were unavailable. State was saved successfully to the Actions cache. The NTFY_TOPIC repository secret is configured. Subscribe to the private topic in the ntfy phone app and verify a test notification before relying on phone alerts. The topic is intentionally absent from this public README.
+The workflow creates an issue as github-actions[bot] and directly mentions the verified repository owner's account. No ntfy app or subscription, personal access token, Apple credentials, or payment information is required. Issues and stock logs are public.
+
+On your phone:
+1. Install GitHub Mobile and sign into the repository owner's account.
+2. Allow iOS notifications for GitHub.
+3. GitHub Mobile → Profile → Settings → Notifications → enable **Direct mentions**. Check Working Hours so they do not silence wanted alerts.
+4. Run the workflow with **Send a phone test notification** checked. Confirm that the labelled test issue reaches your phone.
+
+Email alerts can also be enabled in GitHub's participating-notification settings. App installation alone does not configure every notification preference.
 
 Workflow: https://github.com/v28mz9d29s-blip/manhattan-iphone-stock/actions/workflows/stock.yml
 
-## Schedule and limits
+## Schedule and cost
 
-- Runs at minutes 2, 7, 12, 17, ..., 57 every hour. Five minutes is GitHub's minimum supported scheduled interval; three minutes is not supported.
-- GitHub provides no exact start-time guarantee: jobs may be delayed or dropped. Stock appearing briefly between successful checks may be missed.
-- A **public repository on standard Ubuntu GitHub-hosted runners** has free Actions compute. Only generic monitoring code and non-sensitive stock results should be public. The notification topic stays in an Actions secret, never in source.
-- Private repositories use plan minutes (GitHub Free: 2,000/month), so do not assume a five-minute private monitor is free. This schedule can run about 8,640 times per 30 days.
-- Public schedules automatically disable after 60 days without repository activity. GitHub can also pause/rate-limit workflows; check the Actions page periodically.
-- A tiny state cache reduces repeat notifications. Caches are best effort: eviction can cause a repeat alert for stock already present. Cache storage is separate from Actions compute; leave default storage limits in place. This workload should remain far below the default included 10GB.
-- HTTP failures, wrong products, missing stores, unknown schemas, and timeouts are not reported as out of stock. Exponential backoff and HTTP Retry-After reduce polling on failures.
-- No reservations or purchases are made. Five-minute polling is approximate, not an immediate-stock guarantee.
+Scheduled at minutes 2, 7, 12, ..., 57 each hour. GitHub's minimum interval is five minutes. Standard runners are free for public repositories; no paid runner or AI service is configured. Private repositories have minute quotas.
 
-## One-time setup
+GitHub may delay or drop runs; brief restocks can be missed. Public schedules disable after 60 days without repository activity. Review the Actions page periodically. The tiny state cache suppresses repeat alerts, but cache eviction can cause duplicates. Leave default cache storage limits in place.
 
-1. Create a new **public** repository, for example `manhattan-iphone-stock`. Upload this folder's contents, **including `.github/workflows/stock.yml`**, to the default branch. Do not upload this folder as an extra parent directory.
-2. Install the free ntfy app on your iPhone. Generate a random 40+ character topic (for example `openssl rand -hex 24`) and subscribe on the default `https://ntfy.sh` server. Allow notifications. Anyone who knows a free public topic can publish or subscribe; keep it random and secret. Do not use personal information in the topic.
-3. Repository Settings → Secrets and variables → Actions → New repository secret. Name: `NTFY_TOPIC`. Value: the exact topic you subscribed to. No GitHub PAT or OpenAI API key is required for routine checks.
-4. Open Actions → Manhattan iPhone stock → Run workflow. First run with `probe_only` checked to verify current Apple inventory from GitHub. Then run with `test_alert` checked and verify your phone receives the test. Finally run with neither checked for a complete check, and verify scheduled runs subsequently appear.
-5. Only after live inventory and phone delivery both work, disable the separate hourly ChatGPT stock watch to eliminate its AI usage.
+HTTP errors, missing stores, mismatched products and unknown statuses are failures, never evidence of no stock. Failures back off and produce a mention at most once per six hours while state is retained. No reservations or purchases are made. The separate hourly AI watch is paused.
 
-The workflow is triggered only by its schedule or a manual run, never pull requests. It has read-only repository contents permission, uses a separate stock-state cache, and never commits state changes to your repository.
+## Permissions and verification
 
-## Pause or stop
+The workflow has read access to contents and write access to issues **in this repository**, allowing its short-lived automatic token to create alerts. That token is supplied only to the checker step. No personal token or access to other repositories is required. Actions dependencies are pinned. Only scheduled and manual triggers are enabled.
 
-Actions → Manhattan iPhone stock → three-dot menu → Disable workflow. Enable it again to resume. Delete the repository or workflow to remove it.
+A full GitHub run on October 24, 2026 at 8:25 PM America/New_York retrieved the exact product at all seven stores and saved state. All seven were unavailable then. Notification delivery has since switched to GitHub mentions; confirm a new GitHub test issue reaches your device.
 
-## Local commands
+Pause: Actions → Manhattan iPhone stock → three-dot menu → Disable workflow.
 
-`python -m unittest -v test_monitor.py`
-
-`python monitor.py --probe` reads live inventory without sending alerts or modifying state.
-
-`python monitor.py --test-alert` sends a clearly labelled test using NTFY_TOPIC from the environment.
+Local tests: python -m unittest -v test_monitor.py
+Live stock without alerts: python monitor.py --probe
+Mention test: python monitor.py --test-alert (requires workflow token, repository, and NOTIFY_LOGIN)
 
 ## Sources
 
-- Schedule minimum, delays/dropped jobs, inactivity: https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule
-- Free public runner compute, private quotas, cache storage: https://docs.github.com/en/billing/concepts/product-billing/github-actions
-- Phone notifications: https://docs.ntfy.sh/subscribe/phone/
-- Exact product: https://www.apple.com/shop/buy-iphone/iphone-duo/7.6-inch-display-256gb-star-white-unlocked
+- Schedule: https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule
+- Billing: https://docs.github.com/en/billing/concepts/product-billing/github-actions
+- Mobile notifications: https://docs.github.com/en/subscriptions-and-notifications/get-started/configuring-notifications
+- Product: https://www.apple.com/shop/buy-iphone/iphone-duo/7.6-inch-display-256gb-star-white-unlocked

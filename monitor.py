@@ -54,14 +54,22 @@ def inventory():
 
 
 def notify(title, message):
-    topic = os.environ.get('NTFY_TOPIC', '')
-    if not re.fullmatch(r'[a-zA-Z0-9_-]{32,}', topic):
-        raise ValueError('Set the NTFY_TOPIC Actions secret to a random topic, at least 32 characters')
-    data = json.dumps(dict(topic=topic, title=title, message=message, priority=4, click=BUY)).encode()
-    request = urllib.request.Request('https://ntfy.sh', data=data,
-                                    headers={'Content-Type': 'application/json'}, method='POST')
+    token = os.environ.get('GITHUB_TOKEN', '')
+    repository = os.environ.get('GITHUB_REPOSITORY', '')
+    login = os.environ.get('NOTIFY_LOGIN', '')
+    if not token or not re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repository) or not re.fullmatch(r'[A-Za-z0-9-]+', login):
+        raise ValueError('Configure the GitHub workflow token, repository, and notification recipient')
+    body = f'@{login}\n\n{message}\n\n---\nAutomated pickup inventory alert. No purchase or reservation has been made.'
+    data = json.dumps(dict(title=title, body=body)).encode()
+    request = urllib.request.Request(f'https://api.github.com/repos/{repository}/issues', data=data,
+                                    headers={'Content-Type': 'application/json',
+                                             'Accept': 'application/vnd.github+json',
+                                             'Authorization': 'Bearer ' + token,
+                                             'X-GitHub-Api-Version': '2022-11-28',
+                                             'User-Agent': 'Manhattan-iPhone-Stock-Watch'}, method='POST')
     with urllib.request.urlopen(request, timeout=20) as response:
-        response.read()
+        result = json.load(response)
+    print('Created GitHub alert:', result.get('html_url', 'created'))
 
 
 def newly_available(previous, current):
@@ -125,15 +133,15 @@ def run(path, now=None):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--probe', action='store_true', help='Read live inventory once without sending alerts or changing state')
-    parser.add_argument('--test-alert', action='store_true', help='Send a clearly labelled phone notification test')
+    parser.add_argument('--test-alert', action='store_true', help='Create a clearly labelled GitHub mention test')
     args = parser.parse_args()
     if args.probe:
         print(json.dumps(inventory(), indent=2))
     elif args.test_alert:
         notify('iPhone stock watch test', 'Test notification only; this does not mean any iPhone is available.')
     else:
-        if not re.fullmatch(r'[a-zA-Z0-9_-]{32,}', os.environ.get('NTFY_TOPIC', '')):
-            sys.exit('Configure NTFY_TOPIC before enabling the monitor.')
+        if not os.environ.get('GITHUB_TOKEN') or not os.environ.get('NOTIFY_LOGIN'):
+            sys.exit('Configure the workflow GitHub token and notification recipient.')
         try:
             sys.exit(run(Path(os.environ.get('STATE_PATH', '.monitor-state/state.json'))))
         except Exception as error:

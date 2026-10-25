@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+import io
 from unittest.mock import patch
 from urllib.error import HTTPError
 import monitor as m
@@ -16,6 +17,16 @@ def fixture():
 
 
 class MonitorTests(unittest.TestCase):
+    def test_alert_routes_to_verified_github_recipient(self):
+        with patch.dict(m.os.environ, {'GITHUB_TOKEN': 'test-token', 'GITHUB_REPOSITORY': 'v28mz9d29s-blip/manhattan-iphone-stock', 'NOTIFY_LOGIN': 'v28mz9d29s-blip'}):
+            with patch.object(m.urllib.request, 'urlopen', return_value=io.BytesIO(b'{"html_url":"https://github.com/example/issue"}')) as send:
+                m.notify('TEST', 'Test only')
+                request = send.call_args.args[0]
+                self.assertEqual(request.full_url, 'https://api.github.com/repos/v28mz9d29s-blip/manhattan-iphone-stock/issues')
+                payload = json.loads(request.data)
+                self.assertTrue(payload['body'].startswith('@v28mz9d29s-blip\n'))
+                self.assertNotIn('test-token', request.data.decode())
+
     def test_exact_configuration_and_coverage(self):
         d = fixture()
         self.assertEqual(len(m.parse_inventory(d)), 7)

@@ -15,6 +15,7 @@ on:
         default: false
 permissions:
   contents: read
+  issues: write
 concurrency:
   group: iphone-stock-watch
   cancel-in-progress: false
@@ -39,7 +40,8 @@ jobs:
         id: monitor
         continue-on-error: true
         env:
-          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          GITHUB_TOKEN: ${{ github.token }}
+          NOTIFY_LOGIN: v28mz9d29s-blip
           TEST_ALERT: ${{ inputs.test_alert }}
           PROBE_ONLY: ${{ inputs.probe_only }}
         run: |

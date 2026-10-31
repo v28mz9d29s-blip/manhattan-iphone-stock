@@ -18,15 +18,15 @@ Workflow: https://github.com/v28mz9d29s-blip/manhattan-iphone-stock/actions/work
 
 ## Schedule and cost
 
-Scheduled at minutes 2, 7, 12, ..., 57 each hour. GitHub's minimum interval is five minutes. Standard runners are free for public repositories; no paid runner or AI service is configured. Private repositories have minute quotas.
+Each run checks immediately and then every five minutes for 90 minutes (19 checks), keeping state between checks. Scheduled triggers at minutes 2, 7, 12, ..., 57 each hour queue a successor; the shared concurrency group prevents overlapping checkers. Changes to the workflow or monitor on main also start a run immediately. GitHub's minimum interval is five minutes. Standard runners are free for public repositories; no paid runner or AI service is configured. Private repositories have minute quotas.
 
-GitHub may delay or drop runs; brief restocks can be missed. Public schedules disable after 60 days without repository activity. Review the Actions page periodically. The tiny state cache suppresses repeat alerts, but cache eviction can cause duplicates. Leave default cache storage limits in place.
+GitHub may delay or drop scheduled triggers. Polling inside each active runner bridges ordinary trigger delays, but coverage can still have gaps if no successor is queued when a run ends or a runner fails; brief restocks can be missed. Inventory failures still use exponential backoff up to one hour. Public schedules disable after 60 days without repository activity. Review the Actions page periodically. The tiny state cache suppresses repeat alerts, but cache eviction can cause duplicates. Leave default cache storage limits in place.
 
 HTTP errors, missing stores, mismatched products and unknown statuses are failures, never evidence of no stock. Failures back off silently and are recorded in run logs/state. Out-of-stock results, errors, and recovery never create alert issues. No reservations or purchases are made. The separate hourly AI watch is paused.
 
 ## Permissions and verification
 
-The workflow has read access to contents and write access to issues **in this repository**, allowing its short-lived automatic token to create alerts. That token is supplied only to the checker step. No personal token or access to other repositories is required. Actions dependencies are pinned. Only scheduled and manual triggers are enabled.
+The workflow has read access to contents and write access to issues **in this repository**, allowing its short-lived automatic token to create alerts. That token is supplied only to the checker step. No personal token or access to other repositories is required. Actions dependencies are pinned. Only scheduled, manual, and main-branch pushes affecting the workflow or monitor are enabled.
 
 A full GitHub run on October 24, 2026 at 8:25 PM America/New_York retrieved the exact product at all seven stores and saved state. All seven were unavailable then. Notification delivery has since switched to GitHub mentions; confirm a new GitHub test issue reaches your device.
 
